@@ -1,240 +1,656 @@
 import React, { useRef } from "react";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useMotionValue,
-  useSpring,
-} from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 
-// Logo assets
+import {
+  ArrowRight,
+  Cpu,
+  Globe2,
+  Lightbulb,
+  Network,
+  Users,
+  Zap,
+  Radio,
+  Sparkles,
+} from "lucide-react";
+
 import mtts from "../assets/mtts.png";
 import cs from "../assets/cs.png";
 import wie from "../assets/wie.png";
 
-// ======================================================
-// SOCIETY CONFIG
-// accent -> tiny status dot only (kept deliberately restrained)
-// pos    -> lg desktop placement (mobile stacks)
-// ======================================================
+import AboutEcosystem3D from "../components/AboutEcosystem3D";
+
+/* =========================================================
+   SOCIETY DATA
+========================================================= */
+
 const societies = [
   {
     key: "cs",
-    name: "Computer Society",
+    name: "IEEE Computer Society",
+    shortName: "COMPUTER SOCIETY",
     logo: cs,
-    blurb: "Innovation in computing, AI, and software development.",
-    accent: "#3b82f6",
-    pos: "lg:absolute lg:top-0 lg:right-8 lg:w-72",
-    delay: 0.15,
-    badgeClass: "h-16 px-4 bg-slate-900/90 border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.15)]",
-    imgClass: "h-10 sm:h-11 w-auto max-w-[130px]",
+    description:
+      "Empowering students through computing, software development, artificial intelligence and emerging technologies.",
+    color: "from-blue-500 to-cyan-400",
+    glow: "bg-cyan-400",
+    icon: Cpu,
   },
   {
     key: "mtts",
-    name: "MTT-S",
+    name: "IEEE MTT-S",
+    shortName: "MICROWAVE THEORY & TECH",
     logo: mtts,
-    blurb: "The spectrum of RF and microwave engineering.",
-    accent: "#8b5cf6",
-    pos: "lg:absolute lg:top-[36%] lg:left-0 lg:w-72 lg:z-20",
-    delay: 0.3,
-    badgeClass: "h-16 px-4 bg-slate-900/90 border-purple-500/30 shadow-[0_0_20px_rgba(139,92,246,0.15)]",
-    imgClass: "h-11 sm:h-12 w-auto max-w-[90px]",
+    description:
+      "Exploring microwave engineering, RF technology, communication systems and advanced electronics.",
+    color: "from-cyan-400 to-teal-300",
+    glow: "bg-teal-400",
+    icon: Network,
   },
   {
     key: "wie",
-    name: "Women in Engineering",
+    name: "IEEE Women in Engineering",
+    shortName: "WOMEN IN ENGINEERING",
     logo: wie,
-    blurb: "Empowering women in technology and research.",
-    accent: "#ec4899",
-    pos: "lg:absolute lg:bottom-6 lg:right-16 lg:w-72",
-    delay: 0.45,
-    badgeClass: "h-16 px-4 bg-white/95 border-white shadow-lg shadow-pink-500/20",
-    imgClass: "h-11 sm:h-12 w-auto max-w-[90px] drop-shadow-sm",
+    description:
+      "Building an inclusive community that inspires, supports and empowers women in engineering.",
+    color: "from-violet-500 to-pink-400",
+    glow: "bg-violet-400",
+    icon: Users,
   },
 ];
 
-// ======================================================
-// CHAPTER CARD — 3D Spring Tilt with Cosmic Frosted Glass
-// ======================================================
-function ChapterCard({ society }) {
-  const { name, logo, blurb, accent, pos, delay, badgeClass, imgClass } = society;
+/* =========================================================
+   FLOATING BACKGROUND PARTICLES
+========================================================= */
+
+function FloatingParticles() {
+  const particles = Array.from({
+    length: 32,
+  });
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {particles.map((_, index) => {
+        const size = 1 + (index % 3);
+
+        const left = (index * 37) % 100;
+
+        const top = (index * 61) % 100;
+
+        const duration = 5 + (index % 5);
+
+        const delay = (index % 6) * 0.6;
+
+        return (
+          <motion.span
+            key={index}
+            className="absolute rounded-full bg-cyan-300"
+            style={{
+              width: size,
+              height: size,
+              left: `${left}%`,
+              top: `${top}%`,
+              opacity: 0.15 + (index % 4) * 0.06,
+            }}
+            animate={{
+              y: [-12, 12, -12],
+              opacity: [0.1, 0.5, 0.1],
+            }}
+            transition={{
+              duration,
+              delay,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/* =========================================================
+   SOCIETY CARD
+========================================================= */
+
+function SocietyCard({ society, index = 0 }) {
   const cardRef = useRef(null);
 
-  const px = useMotionValue(0.5);
-  const py = useMotionValue(0.5);
-  const rotateX = useSpring(useTransform(py, [0, 1], [6, -6]), {
-    stiffness: 150,
-    damping: 20,
-  });
-  const rotateY = useSpring(useTransform(px, [0, 1], [-6, 6]), {
-    stiffness: 150,
+  const mouseX = useMotionValue(0);
+
+  const mouseY = useMotionValue(0);
+
+  const rotateX = useSpring(mouseY, {
+    stiffness: 180,
     damping: 20,
   });
 
-  const handleMove = (e) => {
-    const r = cardRef.current?.getBoundingClientRect();
-    if (!r) return;
-    px.set((e.clientX - r.left) / r.width);
-    py.set((e.clientY - r.top) / r.height);
+  const rotateY = useSpring(mouseX, {
+    stiffness: 180,
+    damping: 20,
+  });
+
+  const handleMouseMove = (event) => {
+    if (!cardRef.current) return;
+
+    const rect = cardRef.current.getBoundingClientRect();
+
+    const x = event.clientX - rect.left;
+
+    const y = event.clientY - rect.top;
+
+    const centerX = rect.width / 2;
+
+    const centerY = rect.height / 2;
+
+    mouseX.set(((x - centerX) / centerX) * 7);
+
+    mouseY.set(((centerY - y) / centerY) * 7);
   };
-  const handleLeave = () => {
-    px.set(0.5);
-    py.set(0.5);
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
   };
+
+  const Icon = society.icon;
 
   return (
     <motion.div
-      className={`w-full ${pos}`}
-      style={{ perspective: 1200 }}
-      initial={{ opacity: 0, y: 32 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        rotateX,
+        rotateY,
+        transformStyle: "preserve-3d",
+      }}
+      initial={{
+        opacity: 0,
+        y: 35,
+      }}
+      whileInView={{
+        opacity: 1,
+        y: 0,
+      }}
+      viewport={{
+        once: true,
+        amount: 0.2,
+      }}
+      transition={{
+        duration: 0.7,
+        delay: index * 0.12,
+      }}
+      whileHover={{
+        scale: 1.025,
+        z: 10,
+      }}
+      className="group relative w-full"
     >
-      <motion.div
-        ref={cardRef}
-        onMouseMove={handleMove}
-        onMouseLeave={handleLeave}
-        style={{ rotateX, rotateY }}
-        className="group relative rounded-2xl border border-white/10 bg-[#0c101d]/60 p-6 backdrop-blur-2xl transition-all duration-300 hover:border-white/25 hover:shadow-2xl hover:shadow-black/60 overflow-hidden"
-      >
-        {/* Subtle Ambient Society Corner Glow */}
+      <div
+        className={`absolute -inset-1 rounded-[28px] bg-gradient-to-r ${society.color} opacity-0 blur-2xl transition duration-500 group-hover:opacity-25`}
+      />
+
+      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#061019]/90 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.35)] backdrop-blur-2xl transition-all duration-500 group-hover:border-cyan-300/25">
         <div
-          className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-15 blur-2xl transition-opacity duration-500 group-hover:opacity-35"
-          style={{ backgroundColor: accent }}
+          className={`absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r ${society.color}`}
         />
 
-        {/* High-visibility Emblem Badge */}
-        <div className={`mb-5 inline-flex items-center justify-center rounded-2xl backdrop-blur-xl border transition-all duration-300 group-hover:scale-105 ${badgeClass}`}>
-          <img
-            src={logo}
-            alt={`IEEE ${name} logo`}
-            className={`${imgClass} object-contain transition-transform duration-300`}
-            draggable={false}
-            loading="lazy"
-          />
+        <div
+          className={`pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full ${society.glow}/10 blur-3xl`}
+        />
+
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-blue-500/5 blur-3xl" />
+
+        <div className="absolute right-4 top-4 flex items-center gap-1.5 opacity-40">
+          <span className="h-1 w-1 rounded-full bg-cyan-300" />
+          <span className="h-1 w-1 rounded-full bg-cyan-300" />
+          <span className="h-1 w-1 rounded-full bg-cyan-300" />
         </div>
 
-        <div className="mb-2.5 flex items-center gap-2">
+        <div className="relative z-10 flex items-start justify-between">
+          <motion.div
+            whileHover={{
+              rotate: -3,
+              scale: 1.06,
+            }}
+            className="flex h-[68px] w-[68px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] p-3 shadow-inner"
+          >
+            <img
+              src={society.logo}
+              alt={society.name}
+              className="h-full w-full object-contain"
+            />
+          </motion.div>
+
+          <div className="rounded-xl border border-cyan-400/15 bg-cyan-400/5 p-2.5 text-cyan-300 transition duration-300 group-hover:border-cyan-400/30 group-hover:bg-cyan-400/10">
+            <Icon size={18} />
+          </div>
+        </div>
+
+        <div className="relative z-10 mt-6 flex items-center gap-2">
           <span
-            className="h-1.5 w-1.5 rounded-full"
-            style={{ backgroundColor: accent }}
+            className={`h-1.5 w-1.5 rounded-full bg-gradient-to-r ${society.color} shadow-[0_0_8px_rgba(34,211,238,0.5)]`}
           />
-          <span className="text-[11px] font-mono font-medium uppercase tracking-[0.2em] text-white/50">
-            Active Chapter
+
+          <span className="text-[9px] font-bold uppercase tracking-[0.28em] text-slate-500">
+            {society.shortName}
           </span>
         </div>
 
-        <h3 className="mb-1.5 text-lg font-bold text-white tracking-tight group-hover:text-sky-300 transition-colors">
-          {name}
-        </h3>
-        <p className="text-sm leading-relaxed text-slate-300/80">
-          {blurb}
-        </p>
+        <div className="relative z-10 mt-2">
+          <h3 className="text-xl font-bold tracking-tight text-white">
+            {society.name}
+          </h3>
 
-        {/* Bottom Accent Highlight */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-[1.5px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-          style={{
-            background: `linear-gradient(90deg, transparent 0%, ${accent} 50%, transparent 100%)`,
-          }}
-        />
-      </motion.div>
+          <p className="mt-3 text-sm leading-6 text-slate-400">
+            {society.description}
+          </p>
+        </div>
+
+        <div className="relative z-10 mt-6 flex items-center justify-between border-t border-white/[0.08] pt-4">
+          <div className="flex items-center gap-2">
+            <Radio size={12} className="text-cyan-400/70" />
+
+            <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              Student Branch
+            </span>
+          </div>
+
+          <motion.div
+            whileHover={{
+              x: 3,
+            }}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 transition group-hover:border-cyan-400/40 group-hover:text-cyan-300"
+          >
+            <ArrowRight size={15} />
+          </motion.div>
+        </div>
+      </div>
     </motion.div>
   );
 }
 
+/* =========================================================
+   MAIN ABOUT US
+========================================================= */
+
 export default function AboutUs() {
-  const sectionRef = useRef(null);
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-
-  const watermarkY = useTransform(scrollYProgress, [0, 1], ["-20%", "20%"]);
-  const watermarkScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.9, 1, 0.9]);
-
   return (
     <section
-      ref={sectionRef}
-      id="aboutus"
-      className="section relative flex min-h-screen items-center overflow-hidden"
+      id="about"
+      className="relative overflow-hidden bg-[#02070d] pt-32 pb-24 sm:pt-36 sm:pb-28"
     >
-      <motion.div
-        className="font-display pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 select-none text-[20vw] font-bold text-white/[0.02]"
-        style={{ y: watermarkY, scale: watermarkScale }}
-      >
-        IEEE
-      </motion.div>
+      {/* =================================================
+          BACKGROUND
+      ================================================= */}
 
-      <div className="container relative z-10">
-        <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
-          {/* ==================== TEXT ==================== */}
+      <div className="pointer-events-none absolute inset-0">
+        <motion.div
+          animate={{
+            scale: [1, 1.08, 1],
+            opacity: [0.035, 0.065, 0.035],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="absolute left-1/2 top-0 h-[520px] w-[760px] -translate-x-1/2 rounded-full bg-cyan-500 blur-[130px]"
+        />
+
+        <div className="absolute bottom-0 left-0 h-[450px] w-[450px] rounded-full bg-blue-600/[0.035] blur-[130px]" />
+
+        <div className="absolute right-0 top-1/2 h-[350px] w-[350px] rounded-full bg-violet-600/[0.02] blur-[130px]" />
+
+        <div
+          className="absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
+            backgroundSize: "70px 70px",
+          }}
+        />
+
+        <div
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage:
+              "linear-gradient(transparent 50%, rgba(34,211,238,0.15) 50%)",
+            backgroundSize: "100% 6px",
+          }}
+        />
+      </div>
+
+      <FloatingParticles />
+
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
+        {/* =================================================
+            HEADER
+        ================================================= */}
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 25,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: true,
+            amount: 0.3,
+          }}
+          transition={{
+            duration: 0.7,
+          }}
+          className="mx-auto max-w-3xl text-center"
+        >
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            whileHover={{
+              scale: 1.03,
+            }}
+            className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-2 backdrop-blur-md"
           >
-            <div className="mb-6 flex items-center gap-4">
-              <span className="h-px w-12 bg-sky-400/80" />
-              <span className="font-mono text-xs uppercase tracking-[0.22em] text-sky-400 font-semibold">
-                Who We Are
-              </span>
-            </div>
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-60" />
 
-            <h2 className="font-display mb-4 text-3xl font-extrabold leading-[1.12] tracking-[-0.035em] text-white sm:mb-6 sm:text-4xl md:mb-8 md:text-5xl lg:text-6xl">
-              Advancing Technology <br className="hidden sm:block" />
-              <span className="bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-                for Humanity.
-              </span>
-            </h2>
+              <span className="relative h-1.5 w-1.5 rounded-full bg-cyan-300" />
+            </span>
 
-            <p className="mb-8 max-w-lg text-base sm:text-lg leading-relaxed text-slate-300">
-              IEEE SIES GST is more than just a student chapter; we are a
-              community of innovators, thinkers, and makers. Since 2015, we've
-              been bridging the gap between academic learning and industry
-              excellence.
-            </p>
-
-            <div className="mb-8 grid grid-cols-3 gap-2 sm:gap-4">
-              {[
-                { value: "150+", label: "Active Members" },
-                { value: "3", label: "Chapters" },
-                { value: "20+", label: "Annual Events" },
-              ].map((s) => (
-                <div
-                  key={s.label}
-                  className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:p-4 text-center sm:text-left backdrop-blur-md hover:border-white/20 transition-all hover:bg-white/[0.06]"
-                >
-                  <div className="font-display mb-1 text-xl sm:text-2xl md:text-3xl font-bold text-white tabular-nums tracking-tight">
-                    {s.value}
-                  </div>
-                  <div className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-slate-400">
-                    {s.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <a
-              href="#contact"
-              className="btn btn-secondary group rounded-full border-white/20 px-8 hover:bg-white/10 w-full sm:w-auto inline-flex items-center justify-center gap-2"
-            >
-              Join Our Community
-              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </a>
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-cyan-300">
+              Who We Are
+            </span>
           </motion.div>
 
-          {/* ==================== CHAPTER CARDS ==================== */}
-          <div className="relative mt-10 flex flex-col gap-6 lg:mt-0 lg:block lg:h-[600px]">
-            {societies.map((society) => (
-              <ChapterCard key={society.key} society={society} />
+          <h2 className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+            Advancing Technology
+            <br />
+            <span className="bg-gradient-to-r from-slate-200 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
+              for Humanity.
+            </span>
+          </h2>
+
+          <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">
+            IEEE SIES GST Student Branch is a community of passionate
+            innovators, engineers and technology enthusiasts working together to
+            learn, build and create meaningful impact.
+          </p>
+        </motion.div>
+
+        {/* =================================================
+            MISSION CARDS
+        ================================================= */}
+
+        <div className="mx-auto mt-16 grid max-w-5xl gap-4 sm:grid-cols-3">
+          {/* INNOVATE */}
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 25,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+            transition={{
+              duration: 0.6,
+            }}
+            whileHover={{
+              y: -6,
+              scale: 1.015,
+            }}
+            className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] p-5 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/25 hover:bg-cyan-400/[0.035]"
+          >
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-cyan-400/5 blur-2xl transition group-hover:bg-cyan-400/10" />
+
+            <div className="relative z-10">
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/5 text-cyan-300 transition duration-300 group-hover:scale-110 group-hover:bg-cyan-400/10">
+                <Lightbulb size={19} />
+              </div>
+
+              <h3 className="font-bold text-white">Innovate</h3>
+
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Turn ideas into meaningful technological solutions.
+              </p>
+            </div>
+          </motion.div>
+
+          {/* CONNECT */}
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 25,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+            transition={{
+              duration: 0.6,
+              delay: 0.1,
+            }}
+            whileHover={{
+              y: -6,
+              scale: 1.015,
+            }}
+            className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] p-5 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/25 hover:bg-cyan-400/[0.035]"
+          >
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-blue-400/5 blur-2xl transition group-hover:bg-blue-400/10" />
+
+            <div className="relative z-10">
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/5 text-cyan-300 transition duration-300 group-hover:scale-110 group-hover:bg-cyan-400/10">
+                <Globe2 size={19} />
+              </div>
+
+              <h3 className="font-bold text-white">Connect</h3>
+
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Build a global network of students and professionals.
+              </p>
+            </div>
+          </motion.div>
+
+          {/* IMPACT */}
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 25,
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+            }}
+            viewport={{
+              once: true,
+            }}
+            transition={{
+              duration: 0.6,
+              delay: 0.2,
+            }}
+            whileHover={{
+              y: -6,
+              scale: 1.015,
+            }}
+            className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] p-5 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/25 hover:bg-cyan-400/[0.035]"
+          >
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-violet-400/5 blur-2xl transition group-hover:bg-violet-400/10" />
+
+            <div className="relative z-10">
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/5 text-cyan-300 transition duration-300 group-hover:scale-110 group-hover:bg-cyan-400/10">
+                <Zap size={19} />
+              </div>
+
+              <h3 className="font-bold text-white">Impact</h3>
+
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Use technology to create positive change.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* =================================================
+            3D ECOSYSTEM
+        ================================================= */}
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 40,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: true,
+            amount: 0.1,
+          }}
+          transition={{
+            duration: 1,
+          }}
+          className="mt-24"
+        >
+          {/* TITLE */}
+
+          <div className="mb-8 text-center">
+            <div className="mb-3 flex items-center justify-center gap-2">
+              <Sparkles size={13} className="text-cyan-400" />
+
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-500">
+                Our Ecosystem
+              </span>
+
+              <Sparkles size={13} className="text-cyan-400" />
+            </div>
+
+            <h3 className="text-2xl font-bold text-white sm:text-3xl">
+              One Branch. Multiple Communities.
+            </h3>
+
+            <p className="mx-auto mt-3 max-w-xl text-sm text-slate-500">
+              Different domains. One connected ecosystem of technology,
+              innovation and people.
+            </p>
+          </div>
+
+          {/* =================================================
+              3D SCENE CONTAINER
+          ================================================= */}
+
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[36px] border border-cyan-400/10 bg-[#020b13]/30 shadow-[0_0_100px_rgba(0,200,255,0.05)]">
+            {/* Top HUD */}
+
+            <div className="pointer-events-none absolute left-6 right-6 top-5 z-20 flex items-center justify-between">
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 backdrop-blur-md">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]" />
+
+                <span className="text-[8px] font-bold uppercase tracking-[0.25em] text-cyan-300/70">
+                  IEEE NETWORK
+                </span>
+              </div>
+
+              <div className="hidden rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[8px] font-medium uppercase tracking-[0.2em] text-slate-500 backdrop-blur-md sm:block">
+                3D ECOSYSTEM // ONLINE
+              </div>
+            </div>
+
+            {/* 3D — AboutEcosystem3D.jsx already renders its own
+                node labels (Computer Society / MTT-S / WIE) and the
+                center IEEE badge internally, so nothing else needs
+                to be layered on top of it here. */}
+
+            <AboutEcosystem3D />
+
+            {/* Bottom status */}
+
+            <div className="absolute bottom-5 left-1/2 z-20 -translate-x-1/2">
+              <motion.div
+                animate={{
+                  opacity: [0.4, 0.9, 0.4],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                }}
+                className="rounded-full border border-cyan-400/10 bg-black/30 px-5 py-2 text-[8px] font-semibold uppercase tracking-[0.25em] text-cyan-400/60 backdrop-blur-md"
+              >
+                ● Connected Ecosystem
+              </motion.div>
+            </div>
+          </div>
+
+          {/* =================================================
+              MOBILE SOCIETY CARDS
+          ================================================= */}
+
+          <div className="mt-8 grid gap-5 lg:hidden">
+            {societies.map((society, index) => (
+              <SocietyCard key={society.key} society={society} index={index} />
             ))}
           </div>
-        </div>
+        </motion.div>
+
+        {/* =================================================
+            FINAL STATEMENT
+        ================================================= */}
+
+        <motion.div
+          initial={{
+            opacity: 0,
+          }}
+          whileInView={{
+            opacity: 1,
+          }}
+          viewport={{
+            once: true,
+          }}
+          transition={{
+            duration: 0.8,
+          }}
+          className="mx-auto mt-24 max-w-4xl text-center"
+        >
+          <div className="relative h-px w-full bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent">
+            <motion.div
+              animate={{
+                x: ["-100%", "100%"],
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+              className="absolute left-0 top-0 h-px w-24 bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent"
+            />
+          </div>
+
+          <p className="mt-10 text-lg font-medium leading-8 text-slate-300 sm:text-xl">
+            "The best way to predict the future is to{" "}
+            <span className="text-cyan-300">create it.</span>"
+          </p>
+
+          <div className="mt-5 flex items-center justify-center gap-2">
+            <span className="h-1 w-1 rounded-full bg-cyan-400" />
+
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-600">
+              IEEE SIES GST Student Branch
+            </p>
+
+            <span className="h-1 w-1 rounded-full bg-cyan-400" />
+          </div>
+        </motion.div>
       </div>
     </section>
   );
