@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Cpu, Globe2, Zap, Network } from "lucide-react";
 import TechCore3D from "../components/TechCore3D";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 const features = [
   {
@@ -26,7 +27,33 @@ const features = [
   },
 ];
 
+/* =========================================================
+   STATIC CORE — a lightweight CSS-only stand-in for the
+   TechCore3D WebGL canvas, used on phones where a WebGL
+   glass/wireframe scene is expensive to render.
+========================================================= */
+
+function StaticCoreFallback() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <motion.div
+        animate={{ scale: [1, 1.06, 1], opacity: [0.6, 0.9, 0.6] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        className="h-32 w-32 rounded-full bg-gradient-to-br from-cyan-400/50 to-blue-600/30 blur-xl"
+      />
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+        className="absolute h-52 w-52 rounded-full border border-cyan-400/20 border-t-cyan-400/60"
+      />
+      <div className="absolute h-72 w-72 rounded-full border border-white/5" />
+    </div>
+  );
+}
+
 export default function TechCore() {
+  const isMobile = useIsMobile();
+
   return (
     <section id="tech-core" className="relative overflow-hidden py-24 sm:py-28">
       {/* Background glow */}
@@ -137,7 +164,8 @@ export default function TechCore() {
             </div>
           </motion.div>
 
-          {/* 3D CORE */}
+          {/* 3D CORE — swapped for a lightweight CSS fallback on
+              phones, since the WebGL scene is genuinely heavy */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -149,7 +177,7 @@ export default function TechCore() {
               {/* Glow behind 3D object */}
               <div className="pointer-events-none absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/20 blur-[90px]" />
 
-              <TechCore3D />
+              {isMobile ? <StaticCoreFallback /> : <TechCore3D />}
 
               {/* floating label */}
               <div className="absolute left-1/2 top-5 -translate-x-1/2 rounded-full border border-cyan-400/20 bg-black/30 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-cyan-300 backdrop-blur-xl">

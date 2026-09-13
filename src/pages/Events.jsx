@@ -173,6 +173,62 @@ const categories = [
 ];
 
 /* =========================================================
+   TIMELINE RAIL — a horizontal glowing connector across all
+   events in chronological order, with a travelling pulse and
+   click-to-scroll. Reuses the same visual language as the
+   ecosystem section's NetworkConnections + MovingParticle.
+========================================================= */
+
+function TimelineRail({ events: railEvents }) {
+  if (railEvents.length < 2) return null;
+
+  const scrollToEvent = (id) => {
+    const el = document.getElementById(`event-${id}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  return (
+    <div className="relative mx-auto mt-10 hidden max-w-6xl px-4 lg:block">
+      <div className="relative h-px w-full bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent">
+        {/* Travelling pulse of light along the rail */}
+        <motion.div
+          className="absolute top-1/2 h-2 w-24 -translate-y-1/2 rounded-full bg-gradient-to-r from-transparent via-cyan-300/80 to-transparent blur-[2px]"
+          animate={{ left: ["-10%", "100%"] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
+
+      <div className="relative -mt-[5px] flex items-start justify-between">
+        {railEvents.map((event, index) => (
+          <button
+            key={event.id}
+            type="button"
+            onClick={() => scrollToEvent(event.id)}
+            className="group flex flex-col items-center gap-2 px-1"
+            style={{ width: `${100 / railEvents.length}%` }}
+          >
+            <motion.span
+              initial={{ scale: 0.8, opacity: 0.6 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.04, duration: 0.4 }}
+              className={`relative h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                event.featured
+                  ? "bg-cyan-300 shadow-[0_0_12px_3px_rgba(34,211,238,0.6)]"
+                  : "bg-slate-600 group-hover:bg-cyan-300 group-hover:shadow-[0_0_10px_2px_rgba(34,211,238,0.5)]"
+              }`}
+            />
+            <span className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-wider text-slate-600 transition group-hover:text-cyan-300">
+              {event.date.split(" ").slice(0, 2).join(" ")}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
    STATUS BADGE
 ========================================================= */
 
@@ -197,13 +253,14 @@ function StatusBadge({ featured }) {
 function EventCard({ event, onOpen }) {
   return (
     <motion.article
+      id={`event-${event.id}`}
       layout
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.55 }}
       whileHover={{ y: -8 }}
-      className="group relative h-full"
+      className="group relative h-full scroll-mt-28"
     >
       {/* Hover glow */}
 
@@ -557,6 +614,12 @@ export default function Events() {
             classroom.
           </p>
         </motion.div>
+
+        {/* =================================================
+            TIMELINE RAIL (desktop only — chronological overview)
+        ================================================= */}
+
+        <TimelineRail events={events} />
 
         {/* =================================================
             SEARCH

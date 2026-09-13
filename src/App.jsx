@@ -6,6 +6,8 @@ import {
   createBrowserRouter,
   RouterProvider,
   Navigate,
+  Outlet,
+  useLocation,
 } from "react-router-dom";
 import "./index.css";
 
@@ -24,59 +26,80 @@ const Hero = lazy(() => import("./components/Hero"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const EnhancedBackground = lazy(() => import("./components/BackgroundEffects"));
 
-// Layout
-const Layout = ({ children }) => {
+/* =========================================================
+   HOME PAGE — the original "/" content, pulled into its own
+   component so it can be a child route of RootLayout.
+========================================================= */
+
+function HomePage() {
+  return (
+    <>
+      {/* HERO */}
+      <Hero />
+
+      {/* ABOUT IEEE SIES GST */}
+      <AboutUs />
+
+      {/* 3D TECHNOLOGY CORE */}
+      <TechCore />
+
+      {/* EVENTS */}
+      <Events />
+
+      {/* GALLERY */}
+      <Gallery />
+
+      {/* YOUTUBE SHOWCASE */}
+      <YouTubeShowcase />
+
+      {/* FAQ */}
+      <FAQ />
+
+      {/* CONTACT */}
+      <Contact />
+    </>
+  );
+}
+
+/* =========================================================
+   ROOT LAYOUT — wraps every route with the shared chrome
+   (scroll manager, background) AND animates between routes
+   via AnimatePresence keyed on the pathname, so switching
+   between "/" and "/team" fades/slides instead of jumping.
+========================================================= */
+
+function RootLayout() {
+  const location = useLocation();
+
   return (
     <>
       <ScrollManager />
       <EnhancedBackground />
-      {children}
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.35, ease: "easeInOut" }}
+        >
+          <Outlet />
+        </motion.div>
+      </AnimatePresence>
     </>
   );
-};
+}
 
 // Router
 const router = createBrowserRouter([
   {
     path: "/",
-    element: (
-      <Layout>
-        {/* HERO */}
-        <Hero />
-
-        {/* ABOUT IEEE SIES GST */}
-        <AboutUs />
-
-        {/* 3D TECHNOLOGY CORE */}
-        <TechCore />
-
-        {/* EVENTS */}
-        <Events />
-
-        {/* GALLERY */}
-        <Gallery />
-
-        {/* YOUTUBE SHOWCASE */}
-        <YouTubeShowcase />
-
-        {/* FAQ */}
-        <FAQ />
-
-        {/* CONTACT */}
-        <Contact />
-      </Layout>
-    ),
-  },
-
-  // TEAM PAGE
-  {
-    path: "/team",
-    element: (
-      <Layout>
-        <Teams />
-      </Layout>
-    ),
-    loader: teamLoader,
+    element: <RootLayout />,
+    children: [
+      { index: true, element: <HomePage /> },
+      { path: "team", element: <Teams />, loader: teamLoader },
+    ],
   },
 
   // Redirect old Junior Council route

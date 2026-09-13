@@ -11,6 +11,7 @@ import {
   OrbitControls,
 } from "@react-three/drei";
 import * as THREE from "three";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 /* =========================================================
    COLORS — pushed brighter + one extra accent (magenta) so the
@@ -957,7 +958,31 @@ function Labels() {
    MAIN COMPONENT
 ========================================================= */
 
+/* =========================================================
+   STATIC FALLBACK — lightweight CSS-only stand-in for the
+   Canvas on phones. Three glass spheres with transmission
+   materials + sparkles is expensive; this costs almost
+   nothing while keeping the same layout the Labels expect.
+========================================================= */
+
+function StaticFallback() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div
+        className="h-40 w-40 rounded-full sm:h-48 sm:w-48"
+        style={{
+          background: `radial-gradient(circle, ${CYAN}55, ${BLUE}22 60%, transparent 75%)`,
+          animation: "pulseGlow 4s ease-in-out infinite",
+        }}
+      />
+      <div className="absolute h-64 w-64 rounded-full border border-cyan-400/10 sm:h-80 sm:w-80" />
+    </div>
+  );
+}
+
 export default function AboutEcosystem3D() {
+  const isMobile = useIsMobile();
+
   return (
     <section className="relative w-full overflow-hidden bg-[#020617]">
       {/* Animated background glow */}
@@ -993,20 +1018,24 @@ export default function AboutEcosystem3D() {
       `}</style>
 
       <div className="relative mx-auto h-[580px] w-full max-w-[1200px] sm:h-[640px] lg:h-[700px]">
-        <Canvas
-          shadows
-          dpr={[1, 2]}
-          camera={{ position: [0, 0, 5.65], fov: 40 }}
-          gl={{
-            antialias: true,
-            alpha: true,
-            powerPreference: "high-performance",
-            toneMapping: THREE.ACESFilmicToneMapping,
-            toneMappingExposure: 1.25,
-          }}
-        >
-          <Scene />
-        </Canvas>
+        {isMobile ? (
+          <StaticFallback />
+        ) : (
+          <Canvas
+            shadows
+            dpr={[1, 2]}
+            camera={{ position: [0, 0, 5.65], fov: 40 }}
+            gl={{
+              antialias: true,
+              alpha: true,
+              powerPreference: "high-performance",
+              toneMapping: THREE.ACESFilmicToneMapping,
+              toneMappingExposure: 1.25,
+            }}
+          >
+            <Scene />
+          </Canvas>
+        )}
 
         <Labels />
 

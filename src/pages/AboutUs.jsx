@@ -29,6 +29,7 @@ const societies = [
     name: "IEEE Computer Society",
     shortName: "COMPUTER SOCIETY",
     logo: cs,
+    blurb: "Innovation in computing, AI, and software development.",
     description:
       "Empowering students through computing, software development, artificial intelligence and emerging technologies.",
     color: "from-blue-500 to-cyan-400",
@@ -40,6 +41,7 @@ const societies = [
     name: "IEEE MTT-S",
     shortName: "MICROWAVE THEORY & TECH",
     logo: mtts,
+    blurb: "The spectrum of RF and microwave engineering.",
     description:
       "Exploring microwave engineering, RF technology, communication systems and advanced electronics.",
     color: "from-cyan-400 to-teal-300",
@@ -51,6 +53,7 @@ const societies = [
     name: "IEEE Women in Engineering",
     shortName: "WOMEN IN ENGINEERING",
     logo: wie,
+    blurb: "Empowering women in technology and research.",
     description:
       "Building an inclusive community that inspires, supports and empowers women in engineering.",
     color: "from-violet-500 to-pink-400",

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { gsap } from "gsap";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
@@ -18,13 +18,60 @@ import mttsLogo from "../assets/mtts.webp";
 import wieLogo from "../assets/wie.webp";
 
 import Hero3D from "./Hero3D";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 gsap.registerPlugin(ScrollToPlugin);
+
+/* =========================================================
+   STARFIELD — small twinkling dots behind everything, so the
+   hero reads as "deep space" rather than a flat dark panel.
+   Pure CSS/motion, no extra libraries needed.
+========================================================= */
+
+function Starfield({ count = 60 }) {
+  const stars = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        size: 1 + Math.random() * 1.6,
+        duration: 2.5 + Math.random() * 3,
+        delay: Math.random() * 4,
+      })),
+    [count],
+  );
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {stars.map((star) => (
+        <motion.span
+          key={star.id}
+          className="absolute rounded-full bg-white"
+          style={{
+            left: `${star.left}%`,
+            top: `${star.top}%`,
+            width: star.size,
+            height: star.size,
+          }}
+          animate={{ opacity: [0.15, 0.9, 0.15] }}
+          transition={{
+            duration: star.duration,
+            delay: star.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 const Hero = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -444,6 +491,8 @@ const Hero = () => {
             BACKGROUND EFFECTS
         ================================================= */}
 
+        <Starfield count={isMobile ? 25 : 70} />
+
         <div className="pointer-events-none absolute left-[3%] top-[18%] h-[300px] w-[300px] rounded-full bg-cyan-500/10 blur-[120px]" />
 
         <div className="pointer-events-none absolute bottom-[5%] right-[3%] h-[400px] w-[400px] rounded-full bg-blue-600/10 blur-[140px]" />
@@ -583,56 +632,37 @@ const Hero = () => {
                 </NavLink>
               </div>
 
-              {/* STATS */}
+              {/* STATS — boxed cards instead of thin inline dividers,
+                  so the numbers carry more visual weight */}
 
-              <div className="hero-stats mt-9 flex items-center gap-5 sm:gap-8">
-                <div className="group">
-                  <div className="text-xl font-bold text-white transition-colors group-hover:text-cyan-300 sm:text-2xl">
-                    150+
+              <div className="hero-stats mt-9 grid w-full grid-cols-3 gap-2.5 sm:w-auto sm:auto-cols-max sm:grid-flow-col sm:gap-3">
+                {[
+                  { value: "150+", label: "Members" },
+                  { value: "3", label: "Chapters" },
+                  { value: "20+", label: "Events" },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="group rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-center backdrop-blur-md transition-all duration-300 hover:border-cyan-400/25 hover:bg-cyan-400/[0.05] sm:text-left"
+                  >
+                    <div className="text-xl font-bold text-white transition-colors group-hover:text-cyan-300 sm:text-2xl">
+                      {stat.value}
+                    </div>
+                    <div className="mt-0.5 text-[9px] font-mono uppercase tracking-widest text-slate-500 sm:text-[10px]">
+                      {stat.label}
+                    </div>
                   </div>
+                ))}
 
-                  <div className="text-[9px] font-mono uppercase tracking-widest text-slate-500 sm:text-[10px]">
-                    Members
-                  </div>
-                </div>
-
-                <div className="h-8 w-px bg-white/10" />
-
-                <div className="group">
-                  <div className="text-xl font-bold text-white transition-colors group-hover:text-cyan-300 sm:text-2xl">
-                    3
-                  </div>
-
-                  <div className="text-[9px] font-mono uppercase tracking-widest text-slate-500 sm:text-[10px]">
-                    Chapters
-                  </div>
-                </div>
-
-                <div className="h-8 w-px bg-white/10" />
-
-                <div className="group">
-                  <div className="text-xl font-bold text-white transition-colors group-hover:text-cyan-300 sm:text-2xl">
-                    20+
-                  </div>
-
-                  <div className="text-[9px] font-mono uppercase tracking-widest text-slate-500 sm:text-[10px]">
-                    Events
-                  </div>
-                </div>
-
-                <div className="hidden h-8 w-px bg-white/10 sm:block" />
-
-                <div className="hidden sm:block">
-                  <div className="flex items-center gap-1.5">
-                    <Radio className="h-3.5 w-3.5 text-cyan-400" />
-
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-cyan-400">
+                <div className="hidden items-center gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.04] px-4 py-3 sm:flex">
+                  <Radio className="h-4 w-4 animate-pulse text-cyan-400" />
+                  <div>
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-cyan-400">
                       Live
-                    </span>
-                  </div>
-
-                  <div className="mt-0.5 text-[9px] font-mono uppercase tracking-widest text-slate-500">
-                    Network
+                    </div>
+                    <div className="text-[9px] font-mono uppercase tracking-widest text-slate-500">
+                      Network
+                    </div>
                   </div>
                 </div>
               </div>
@@ -673,10 +703,28 @@ const Hero = () => {
 
               <div className="absolute h-[150px] w-[150px] rounded-full border border-white/5 sm:h-[220px] sm:w-[220px] lg:h-[320px] lg:w-[320px]" />
 
-              {/* 3D OBJECT */}
+              {/* 3D OBJECT — the WebGL canvas is genuinely heavy
+                  (glass materials, multiple lights, sparkles).
+                  On phones, swap it for a static CSS glow that
+                  looks similar but costs the GPU almost nothing. */}
 
               <div className="relative h-[420px] w-[420px] sm:h-[500px] sm:w-[500px] lg:h-[620px] lg:w-[620px]">
-                <Hero3D />
+                {isMobile ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <motion.div
+                      animate={{ scale: [1, 1.05, 1], opacity: [0.7, 1, 0.7] }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                      className="h-40 w-40 rounded-full bg-gradient-to-br from-cyan-400/40 to-blue-600/30 blur-2xl"
+                    />
+                    <div className="absolute h-24 w-24 rounded-full border border-cyan-400/20" />
+                  </div>
+                ) : (
+                  <Hero3D />
+                )}
               </div>
 
               {/* FLOATING CARD — NETWORK */}
